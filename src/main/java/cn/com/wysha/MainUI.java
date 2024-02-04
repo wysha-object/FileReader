@@ -19,6 +19,7 @@ public class MainUI extends JFrame {
     private JLabel mail;
 
     public MainUI() {
+        System.out.println("Welcome!");
         setTitle("FileReader "+VERSION);
         version.setText(VERSION);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
