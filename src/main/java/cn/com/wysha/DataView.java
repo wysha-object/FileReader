@@ -49,7 +49,7 @@ public class DataView {
                     int n = index * v + (i + 1) / 2;
                     int a = (int) (((double) n) / current.length() * 100);
                     a = Math.min(a, 100);
-                    System.out.print(current.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + current.length() + "(byte)\r");
+                    System.out.println(current.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + current.length() + "(byte)");
                     int data = bytes[0];
                     if (data < 0) {
                         data += 256;
@@ -124,7 +124,7 @@ public class DataView {
                         ++n;
                         int a = (int) (((double) n) / file.length() * 100);
                         a = Math.min(a, 100);
-                        System.out.print(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)\r");
+                        System.out.println(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)");
                     }
                     System.out.print('\n');
                     save(bs);
@@ -151,7 +151,7 @@ public class DataView {
                 int n = index * (ss.length - 1) / 2 + (i + 1) / 2;
                 int a = (int) (((double) n) / length * 100);
                 a = Math.min(a, 100);
-                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\tThere may be deviations from actual progress.\r");
+                System.out.println(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\tThere may be deviations from actual progress.");
             }
             ++index;
         }
@@ -161,7 +161,7 @@ public class DataView {
                 outputStream.write(new byte[]{bytes[i - 1]});
                 int a = (int) (((double) i) / bytes.length * 100);
                 a = Math.min(a, 100);
-                System.out.print(current.getAbsolutePath() + "\twriteOther progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + bytes.length + "(byte)\r");
+                System.out.println(current.getAbsolutePath() + "\twriteOther progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + bytes.length + "(byte)");
             }
         }
         System.out.print('\n');
