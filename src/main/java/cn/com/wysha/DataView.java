@@ -73,10 +73,11 @@ public class DataView {
                 table = new JTable();
                 table.getTableHeader().setReorderingAllowed(false);
                 JPanel contentPane = new JPanel(new BorderLayout());
-                contentPane.add(table.getTableHeader(), BorderLayout.NORTH);
                 JFrame jFrame = new JFrame(current.getAbsolutePath());
-                JScrollPane jScrollPane = new JScrollPane(table);
-                contentPane.add(jScrollPane, BorderLayout.CENTER);
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(table.getTableHeader(), BorderLayout.NORTH);
+                panel.add(new JScrollPane(table), BorderLayout.CENTER);
+                contentPane.add(panel, BorderLayout.CENTER);
                 JButton jButton = getjButton();
                 contentPane.add(jButton, BorderLayout.SOUTH);
                 jFrame.setContentPane(contentPane);
@@ -108,24 +109,29 @@ public class DataView {
     private JButton getjButton() {
         JButton jButton = new JButton("Stitch the specified data to the end and save it.");
         jButton.addActionListener(eve -> {
-            JFileChooser jFileChooser=new JFileChooser();
-            File file = jFileChooser.getSelectedFile();
-            try (InputStream input = new FileInputStream(file)) {
-                byte[] bs = new byte[(int) file.length()];
-                byte[] by=new byte[1];
-                System.out.print('\n');
-                int n=0;
-                while (input.read(by) != -1) {
-                    int a = (int) (((double) n) / file.length() * 100);
-                    a = Math.min(a, 100);
-                    System.out.print(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)\r");
-                    bs[n]=by[0];
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            jFileChooser.setMultiSelectionEnabled(true);
+            if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                File file = jFileChooser.getSelectedFile();
+                try (InputStream input = new FileInputStream(file)) {
+                    byte[] bs = new byte[(int) file.length()];
+                    byte[] by = new byte[1];
+                    System.out.print('\n');
+                    int n = 0;
+                    while (input.read(by) != -1) {
+                        bs[n] = by[0];
+                        ++n;
+                        int a = (int) (((double) n) / file.length() * 100);
+                        a = Math.min(a, 100);
+                        System.out.print(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)\r");
+                    }
+                    System.out.print('\n');
+                    save(bs);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(e.hashCode());
                 }
-                System.out.print('\n');
-                save(bs);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(e.hashCode());
             }
         });
         return jButton;
@@ -145,16 +151,17 @@ public class DataView {
                 int n = index * (ss.length - 1) / 2 + (i + 1) / 2;
                 int a = (int) (((double) n) / length * 100);
                 a = Math.min(a, 100);
-                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\r");
+                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\tThere may be deviations from actual progress.\r");
             }
             ++index;
         }
         if (bytes != null) {
+            System.out.print('\n');
             for (int i = 1; i <= bytes.length; i++) {
                 outputStream.write(new byte[]{bytes[i - 1]});
                 int a = (int) (((double) i) / bytes.length * 100);
                 a = Math.min(a, 100);
-                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + length + "(byte)\r");
+                System.out.print(current.getAbsolutePath() + "\twriteOther progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + bytes.length + "(byte)\r");
             }
         }
         System.out.print('\n');
