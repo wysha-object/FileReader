@@ -17,16 +17,13 @@ public class DataView {
     private String[][] dataArray;
     private String[] objects;
     private JTable table;
-    private JPanel contentPane;
-    private JScrollPane jScrollPane;
-    private JFrame jFrame;
-    private int radix;
-
+    private final int radix;
     public DataView(int v, int radix) {
         this.radix = radix;
         JFileChooser jFileChooser = new JFileChooser();
         jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jFileChooser.setMultiSelectionEnabled(true);
+        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
         if (
                 jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION
         ) {
@@ -42,34 +39,48 @@ public class DataView {
             }
             LinkedList<String[]> linkedList = new LinkedList<>();
             try (InputStream inputStream = new FileInputStream(current)) {
-                byte[] bytes = new byte[v];
                 int index = 0;
+                int i = 1;
+                byte[] bytes = new byte[1];
+                String[] os = new String[size];
+                os[0] = Integer.toString(index, 10);
+                System.out.print('\n');
                 while (inputStream.read(bytes) != -1) {
-                    String[] os = new String[size];
-                    os[0] = Integer.toString(index, 10);
-                    for (int i = 1; i < size; i += 2) {
-                        int data = bytes[(i - 1) / 2];
-                        if (data < 0) {
-                            data += 256;
-                        }
-                        os[i] = Integer.toString(data, radix);
-                        os[i + 1] = String.valueOf((char) data);
+                    int n = index * v + (i + 1) / 2;
+                    int a = (int) (((double) n) / current.length() * 100);
+                    a = Math.min(a, 100);
+                    System.out.print(current.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + current.length() + "(byte)\r");
+                    int data = bytes[0];
+                    if (data < 0) {
+                        data += 256;
                     }
+                    os[i] = Integer.toString(data, radix);
+                    os[i + 1] = String.valueOf((char) data);
+                    i += 2;
+                    if (i >= size) {
+                        ++index;
+                        i = 1;
+                        linkedList.add(os);
+                        os = new String[size];
+                        os[0] = Integer.toString(index, 10);
+                    }
+                }
+                System.out.print('\n');
+                if (i != 1) {
                     linkedList.add(os);
-                    ++index;
                 }
                 dataArray = linkedList.toArray(new String[0][0]);
                 table = new JTable();
                 table.getTableHeader().setReorderingAllowed(false);
-                contentPane = new JPanel(new BorderLayout());
+                JPanel contentPane = new JPanel(new BorderLayout());
                 contentPane.add(table.getTableHeader(), BorderLayout.NORTH);
-                jFrame = new JFrame(current.getAbsolutePath());
-                jScrollPane = new JScrollPane(table);
+                JFrame jFrame = new JFrame(current.getAbsolutePath());
+                JScrollPane jScrollPane = new JScrollPane(table);
                 contentPane.add(jScrollPane, BorderLayout.CENTER);
-                jFrame.setContentPane(jScrollPane);
-                Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
+                JButton jButton = getjButton();
+                contentPane.add(jButton, BorderLayout.SOUTH);
+                jFrame.setContentPane(contentPane);
                 jFrame.setSize(dimension.width / 2, dimension.height / 2);
-                jFrame.setVisible(true);
                 DefaultTableModel defaultTableModel = getDefaultTableModel();
                 table.setModel(defaultTableModel);
                 jFrame.addWindowListener(new WindowAdapter() {
@@ -79,26 +90,74 @@ public class DataView {
                         choose.setVisible(true);
                         try {
                             if (choose.isChoose()) {
-                                save();
+                                save(null);
                             }
                         } catch (Exception exception) {
+                            exception.printStackTrace();
                             System.exit(exception.hashCode());
                         }
                     }
                 });
+                jFrame.setVisible(true);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }
     }
 
-    private void save() throws Exception{
+    private JButton getjButton() {
+        JButton jButton = new JButton("Stitch the specified data to the end and save it.");
+        jButton.addActionListener(eve -> {
+            JFileChooser jFileChooser=new JFileChooser();
+            File file = jFileChooser.getSelectedFile();
+            try (InputStream input = new FileInputStream(file)) {
+                byte[] bs = new byte[(int) file.length()];
+                byte[] by=new byte[1];
+                System.out.print('\n');
+                int n=0;
+                while (input.read(by) != -1) {
+                    int a = (int) (((double) n) / file.length() * 100);
+                    a = Math.min(a, 100);
+                    System.out.print(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)\r");
+                    bs[n]=by[0];
+                }
+                System.out.print('\n');
+                save(bs);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(e.hashCode());
+            }
+        });
+        return jButton;
+    }
+
+    private void save(byte[] bytes) throws Exception {
+        System.out.print('\n');
         OutputStream outputStream=new FileOutputStream(current);
+        int index = 0;
+        int length = dataArray.length * (dataArray[0].length - 1) / 2;
         for (String[] ss:dataArray){
             for (int i = 1; i < ss.length; i+=2) {
+                if (ss[i] == null) {
+                    break;
+                }
                 outputStream.write(new byte[]{(byte) Integer.parseInt(ss[i],radix)});
+                int n = index * (ss.length - 1) / 2 + (i + 1) / 2;
+                int a = (int) (((double) n) / length * 100);
+                a = Math.min(a, 100);
+                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\r");
+            }
+            ++index;
+        }
+        if (bytes != null) {
+            for (int i = 1; i <= bytes.length; i++) {
+                outputStream.write(new byte[]{bytes[i - 1]});
+                int a = (int) (((double) i) / bytes.length * 100);
+                a = Math.min(a, 100);
+                System.out.print(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "|".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + length + "(byte)\r");
             }
         }
+        System.out.print('\n');
     }
 
     private DefaultTableModel getDefaultTableModel() {
