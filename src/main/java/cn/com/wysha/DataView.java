@@ -151,8 +151,8 @@ public class DataView extends JFrame {
             addTableModelListener(event -> {
                 if (event.getType() == TableModelEvent.UPDATE) {
                     int row = event.getFirstRow();
-                    int col = event.getColumn();
-                    if (row != -1 && col != -1) {
+                    int col = event.getColumn()-1;
+                    if (row >= 0 && col >= 0) {
                         allData.put(
                                 currentStart + ((long) (row)) * numberOfColumns + col,
                                 this==valuesJTableModel? (short) Integer.parseInt((String) this.getValueAt(row,col),radix): (short) this.getValueAt(row,col)
@@ -166,7 +166,7 @@ public class DataView extends JFrame {
 
         @Override
         public boolean isCellEditable(int row, int col) {
-            return allData.get(currentStart + ((long) (row - 1)) * numberOfColumns + col) == null;
+            return col!=0&&allData.get(currentStart + ((long) (row - 1)) * numberOfColumns + col) == null;
         }
     }
 }
