@@ -38,7 +38,7 @@ public class DataView extends JFrame {
         this.names = new String[numberOfColumns+1];
         names[0]="index";
         for (int i = 1; i <= numberOfColumns; i++) {
-            names[i] = Integer.toString(i, radix);
+            names[i] = Integer.toString(i-1, radix);
         }
         JFileChooser jFileChooser = new JFileChooser();
         jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
