@@ -84,21 +84,18 @@ public class DataView extends JFrame {
     private void setCurrent(long start, long end) {
         currentStart = start;
         currentEnd=end;
-        int a=(int) ((end - start) / numberOfColumns);
-        int numberOfRows = a + 1;
+        int numberOfRows = (int) ((end - start) / numberOfColumns) + 1;
         String[][] bytes = new String[numberOfRows][numberOfColumns+1];
         String[][] chars = new String[numberOfRows][numberOfColumns+1];
         int row = -1;
         int col = numberOfColumns+1;
-        bytes[a][0] = Long.toString(a, radix);
-        chars[a][0] = Long.toString(a, radix);
         for (long i = start; i < end; ++i) {
             System.out.println(current.getName()+"\tsetCurrent\t"+i+"\t/\t"+end);
             if (col > numberOfColumns) {
                 ++row;
                 col = 1;
-                bytes[row][0] = Long.toString(row, radix);
-                chars[row][0] = Long.toString(row, radix);
+                bytes[row][0] = Long.toString(start+ (long) row *numberOfColumns, radix);
+                chars[row][0] = Long.toString(start+ (long) row *numberOfColumns, radix);
             }
             Short b = allData.get(i);
             if (b == null) {
@@ -110,6 +107,8 @@ public class DataView extends JFrame {
             }
             ++col;
         }
+        bytes[numberOfRows-1][0] = Long.toString(start+ (long) (numberOfRows-1) *numberOfColumns, radix);
+        chars[numberOfRows-1][0] = Long.toString(start+ (long) (numberOfRows-1) *numberOfColumns, radix);
         valuesJTableModel.setDataVector(bytes, names);
         charsJTableModel.setDataVector(chars, names);
     }
@@ -155,7 +154,7 @@ public class DataView extends JFrame {
                     if (row >= 0 && col >= 0) {
                         allData.put(
                                 currentStart + ((long) (row)) * numberOfColumns + col,
-                                this==valuesJTableModel? (short) Integer.parseInt((String) this.getValueAt(row,col),radix): (short) this.getValueAt(row,col)
+                                this==valuesJTableModel? (short) Integer.parseInt((String) this.getValueAt(row,event.getColumn()),radix): (short) ((String)this.getValueAt(row,event.getColumn())).charAt(0)
                         );
                         setCurrent(currentStart,currentEnd);
                     }
@@ -166,7 +165,7 @@ public class DataView extends JFrame {
 
         @Override
         public boolean isCellEditable(int row, int col) {
-            return col!=0&&allData.get(currentStart + ((long) (row - 1)) * numberOfColumns + col) == null;
+            return col!=0&&allData.get(currentStart + ((long) row) * numberOfColumns + col-1) != null;
         }
     }
 }
