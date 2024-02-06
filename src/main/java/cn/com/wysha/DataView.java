@@ -20,14 +20,12 @@ public class DataView extends JFrame {
     private final MyModel valuesJTableModel = new MyModel();
     private final MyModel charsJTableModel = new MyModel();
     private final String[] names;
-    private final DefaultTableModel listJTableModel = new DefaultTableModel();
     private long currentStart;
     private long currentEnd;
     private JPanel contentPane;
     private JPanel valuesJPanel;
     private JPanel charsJPanel;
     private JLabel label;
-    private JPanel listJPanel;
     private JButton jumpButton;
     private JButton saveButton;
     private JButton readButton;
@@ -37,8 +35,9 @@ public class DataView extends JFrame {
         label.setText("radix : " + radix);
         this.numberOfColumns = numberOfColumns;
         this.radix = radix;
-        this.names = new String[numberOfColumns];
-        for (int i = 0; i < numberOfColumns; i++) {
+        this.names = new String[numberOfColumns+1];
+        names[0]="index";
+        for (int i = 1; i <= numberOfColumns; i++) {
             names[i] = Integer.toString(i, radix);
         }
         JFileChooser jFileChooser = new JFileChooser();
@@ -58,9 +57,8 @@ public class DataView extends JFrame {
         charsJPanel.add(new JScrollPane(charsJTable), BorderLayout.CENTER);
         valuesJTable.getTableHeader().setReorderingAllowed(false);
         charsJTable.getTableHeader().setReorderingAllowed(false);
+        DefaultTableModel listJTableModel = new DefaultTableModel();
         JTable list = new JTable(listJTableModel);
-        listJPanel.add(list.getTableHeader(), BorderLayout.NORTH);
-        listJPanel.add(new JScrollPane(list), BorderLayout.CENTER);
         list.setEnabled(false);
         setSize(dimension.width / 2, dimension.height / 2);
         readButton.addActionListener(e -> {
@@ -88,18 +86,19 @@ public class DataView extends JFrame {
         currentEnd=end;
         int a=(int) ((end - start) / numberOfColumns);
         int numberOfRows = a + 1;
-        String[][] bytes = new String[numberOfRows][numberOfColumns];
-        Character[][] chars = new Character[numberOfRows][numberOfColumns];
-        String[][] strings = new String[numberOfRows][1];
+        String[][] bytes = new String[numberOfRows][numberOfColumns+1];
+        String[][] chars = new String[numberOfRows][numberOfColumns+1];
         int row = -1;
-        int col = numberOfColumns;
-        strings[a][0] = Long.toString(a, radix);
+        int col = numberOfColumns+1;
+        bytes[a][0] = Long.toString(a, radix);
+        chars[a][0] = Long.toString(a, radix);
         for (long i = start; i < end; ++i) {
             System.out.println(current.getName()+"\tsetCurrent\t"+i+"\t/\t"+end);
-            if (col == numberOfColumns) {
+            if (col > numberOfColumns) {
                 ++row;
-                col = 0;
-                strings[row][0] = Long.toString(row, radix);
+                col = 1;
+                bytes[row][0] = Long.toString(row, radix);
+                chars[row][0] = Long.toString(row, radix);
             }
             Short b = allData.get(i);
             if (b == null) {
@@ -107,13 +106,12 @@ public class DataView extends JFrame {
                 chars[row][col] = null;
             } else {
                 bytes[row][col] = Integer.toString(b, radix);
-                chars[row][col] = (char) (short) b;
+                chars[row][col] = String.valueOf((char) (short) b);
             }
             ++col;
         }
         valuesJTableModel.setDataVector(bytes, names);
         charsJTableModel.setDataVector(chars, names);
-        listJTableModel.setDataVector(strings, new String[]{"index"});
     }
 
     private void read(long start, long end) {
