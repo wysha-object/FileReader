@@ -12,9 +12,9 @@ public class MainUI extends JFrame {
     private JPanel contentPane;
     private JButton chooseFileButton;
     private JSpinner numberOfColumns;
-    private JLabel label;
-    private JLabel radixLabel;
+    private JLabel columns;
     private JSpinner radixSpinner;
+    private JLabel radixLabel;
     private JLabel version;
     private JLabel mail;
 
@@ -23,12 +23,12 @@ public class MainUI extends JFrame {
         setTitle("FileReader "+VERSION);
         version.setText(VERSION);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        numberOfColumns.setValue(10);
+        numberOfColumns.setValue(16);
         radixSpinner.setValue(16);
         setContentPane(contentPane);
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
         setSize(dimension.width / 2, dimension.height / 2);
         setLocationRelativeTo(null);
-        chooseFileButton.addActionListener(e -> new DataView((int) numberOfColumns.getValue(),(int) radixSpinner.getValue()));
+        chooseFileButton.addActionListener(e -> new DataView((int) radixSpinner.getValue(), (int) numberOfColumns.getValue()).setVisible(true));
     }
 }

@@ -4,193 +4,171 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.*;
-import java.util.LinkedList;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 /**
  * @author wysha
  */
-public class DataView {
-    private File current;
-    private String[][] dataArray;
-    private String[] objects;
-    private JTable table;
+public class DataView extends JFrame {
     private final int radix;
-    public DataView(int v, int radix) {
+    private final File current;
+    private final HashMap<Long, Short> allData = new HashMap<>();
+    private final int numberOfColumns;
+    private final MyModel valuesJTableModel = new MyModel();
+    private final MyModel charsJTableModel = new MyModel();
+    private final String[] names;
+    private final DefaultTableModel listJTableModel = new DefaultTableModel();
+    private long currentStart;
+    private long currentEnd;
+    private JPanel contentPane;
+    private JPanel valuesJPanel;
+    private JPanel charsJPanel;
+    private JLabel label;
+    private JPanel listJPanel;
+    private JButton jumpButton;
+    private JButton saveButton;
+    private JButton readButton;
+
+    public DataView(int radix, int numberOfColumns) {
+        setContentPane(contentPane);
+        label.setText("radix : " + radix);
+        this.numberOfColumns = numberOfColumns;
         this.radix = radix;
+        this.names = new String[numberOfColumns];
+        for (int i = 0; i < numberOfColumns; i++) {
+            names[i] = Integer.toString(i, radix);
+        }
         JFileChooser jFileChooser = new JFileChooser();
         jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jFileChooser.setMultiSelectionEnabled(true);
-        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
-        if (
-                jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION
-        ) {
-            current = jFileChooser.getSelectedFile();
-            int size = v * 2 + 1;
-            objects = new String[size];
-            objects[0] = "index";
-            for (int i = 1; i < size; i += 2) {
-                int index = i / 2;
-                String string = Integer.toString(index, 10);
-                objects[i] = string + "-value";
-                objects[i + 1] = string + "-char";
-            }
-            LinkedList<String[]> linkedList = new LinkedList<>();
-            try (InputStream inputStream = new FileInputStream(current)) {
-                int index = 0;
-                int i = 1;
-                byte[] bytes = new byte[1];
-                String[] os = new String[size];
-                os[0] = Integer.toString(index, 10);
-                System.out.print('\n');
-                while (inputStream.read(bytes) != -1) {
-                    int n = index * v + (i + 1) / 2;
-                    int a = (int) (((double) n) / current.length() * 100);
-                    a = Math.min(a, 100);
-                    System.out.println(current.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + current.length() + "(byte)");
-                    int data = bytes[0];
-                    if (data < 0) {
-                        data += 256;
-                    }
-                    os[i] = Integer.toString(data, radix);
-                    os[i + 1] = String.valueOf((char) data);
-                    i += 2;
-                    if (i >= size) {
-                        ++index;
-                        i = 1;
-                        linkedList.add(os);
-                        os = new String[size];
-                        os[0] = Integer.toString(index, 10);
-                    }
-                }
-                System.out.print('\n');
-                if (i != 1) {
-                    linkedList.add(os);
-                }
-                dataArray = linkedList.toArray(new String[0][0]);
-                table = new JTable();
-                table.getTableHeader().setReorderingAllowed(false);
-                JPanel contentPane = new JPanel(new BorderLayout());
-                JFrame jFrame = new JFrame(current.getAbsolutePath());
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(table.getTableHeader(), BorderLayout.NORTH);
-                panel.add(new JScrollPane(table), BorderLayout.CENTER);
-                contentPane.add(panel, BorderLayout.CENTER);
-                JButton jButton = getjButton();
-                contentPane.add(jButton, BorderLayout.SOUTH);
-                jFrame.setContentPane(contentPane);
-                jFrame.setSize(dimension.width / 2, dimension.height / 2);
-                DefaultTableModel defaultTableModel = getDefaultTableModel();
-                table.setModel(defaultTableModel);
-                jFrame.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        Choose choose = new Choose();
-                        choose.setVisible(true);
-                        try {
-                            if (choose.isChoose()) {
-                                save(null);
-                            }
-                        } catch (Exception exception) {
-                            exception.printStackTrace();
-                            System.exit(exception.hashCode());
-                        }
-                    }
-                });
-                jFrame.setVisible(true);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-    }
-
-    private JButton getjButton() {
-        JButton jButton = new JButton("Stitch the specified data to the end and save it.");
-        jButton.addActionListener(eve -> {
-            JFileChooser jFileChooser = new JFileChooser();
-            jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            jFileChooser.setMultiSelectionEnabled(true);
-            if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                File file = jFileChooser.getSelectedFile();
-                try (InputStream input = new FileInputStream(file)) {
-                    byte[] bs = new byte[(int) file.length()];
-                    byte[] by = new byte[1];
-                    System.out.print('\n');
-                    int n = 0;
-                    while (input.read(by) != -1) {
-                        bs[n] = by[0];
-                        ++n;
-                        int a = (int) (((double) n) / file.length() * 100);
-                        a = Math.min(a, 100);
-                        System.out.println(file.getAbsolutePath() + "\tread progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + file.length() + "(byte)");
-                    }
-                    System.out.print('\n');
-                    save(bs);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.exit(e.hashCode());
-                }
-            }
+        jFileChooser.showOpenDialog(null);
+        this.current = jFileChooser.getSelectedFile();
+        setTitle(current.getName());
+        read(0, numberOfColumns);
+        setCurrent(0, numberOfColumns);
+        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
+        JTable valuesJTable = new JTable(valuesJTableModel);
+        valuesJPanel.add(valuesJTable.getTableHeader(), BorderLayout.NORTH);
+        JTable charsJTable = new JTable(charsJTableModel);
+        charsJPanel.add(charsJTable.getTableHeader(), BorderLayout.NORTH);
+        valuesJPanel.add(new JScrollPane(valuesJTable), BorderLayout.CENTER);
+        charsJPanel.add(new JScrollPane(charsJTable), BorderLayout.CENTER);
+        valuesJTable.getTableHeader().setReorderingAllowed(false);
+        charsJTable.getTableHeader().setReorderingAllowed(false);
+        JTable list = new JTable(listJTableModel);
+        listJPanel.add(list.getTableHeader(), BorderLayout.NORTH);
+        listJPanel.add(new JScrollPane(list), BorderLayout.CENTER);
+        list.setEnabled(false);
+        setSize(dimension.width / 2, dimension.height / 2);
+        readButton.addActionListener(e -> {
+            Choose choose=new Choose();
+            choose.setVisible(true);
+            long[] rs=choose.getValue();
+            read(rs[0],rs[1]);
         });
-        return jButton;
-    }
-
-    private void save(byte[] bytes) throws Exception {
-        System.out.print('\n');
-        OutputStream outputStream=new FileOutputStream(current);
-        int index = 0;
-        int length = dataArray.length * (dataArray[0].length - 1) / 2;
-        for (String[] ss:dataArray){
-            for (int i = 1; i < ss.length; i+=2) {
-                if (ss[i] == null) {
-                    break;
-                }
-                outputStream.write(new byte[]{(byte) Integer.parseInt(ss[i],radix)});
-                int n = index * (ss.length - 1) / 2 + (i + 1) / 2;
-                int a = (int) (((double) n) / length * 100);
-                a = Math.min(a, 100);
-                System.out.println(current.getAbsolutePath() + "\twrite progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + n + '/' + length + "(byte)\tThere may be deviations from actual progress.");
-            }
-            ++index;
-        }
-        if (bytes != null) {
-            System.out.print('\n');
-            for (int i = 1; i <= bytes.length; i++) {
-                outputStream.write(new byte[]{bytes[i - 1]});
-                int a = (int) (((double) i) / bytes.length * 100);
-                a = Math.min(a, 100);
-                System.out.println(current.getAbsolutePath() + "\twriteOther progress:\t" + "\t|\t" + "•".repeat(a) + " ".repeat(100 - a) + "\t|\t" + i + '/' + bytes.length + "(byte)");
-            }
-        }
-        System.out.print('\n');
-    }
-
-    private DefaultTableModel getDefaultTableModel() {
-        DefaultTableModel defaultTableModel = new DefaultTableModel(dataArray, objects) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column != 0;
-            }
-        };
-        defaultTableModel.addTableModelListener(event -> {
-            if (event.getType() == TableModelEvent.UPDATE) {
-                int row = event.getFirstRow();
-                int col = event.getColumn();
-                if (row != -1 && col != -1) {
-                    if (event.getColumn() % 2 == 0) {
-                        char c = ((String) table.getValueAt(row, col)).charAt(0);
-                        dataArray[row][col] = String.valueOf(c);
-                        dataArray[row][col - 1] = Integer.toString(c, radix);
-                    } else {
-                        dataArray[row][col] = (String) table.getValueAt(row, col);
-                        dataArray[row][col + 1] = String.valueOf((char) Integer.parseInt((String) table.getValueAt(row, col), radix));
-                    }
-                    defaultTableModel.setDataVector(dataArray, objects);
-                }
-            }
+        jumpButton.addActionListener(e -> {
+            Choose choose=new Choose();
+            choose.setVisible(true);
+            long[] rs=choose.getValue();
+            setCurrent(rs[0],rs[1]);
         });
-        return defaultTableModel;
+        saveButton.addActionListener(e -> {
+            Choose choose=new Choose();
+            choose.setVisible(true);
+            long[] rs=choose.getValue();
+            write(rs[0],rs[1]);
+        });
+    }
+
+    private void setCurrent(long start, long end) {
+        currentStart = start;
+        currentEnd=end;
+        int a=(int) ((end - start) / numberOfColumns);
+        int numberOfRows = a + 1;
+        String[][] bytes = new String[numberOfRows][numberOfColumns];
+        Character[][] chars = new Character[numberOfRows][numberOfColumns];
+        String[][] strings = new String[numberOfRows][1];
+        int row = -1;
+        int col = numberOfColumns;
+        strings[a][0] = Long.toString(a, radix);
+        for (long i = start; i < end; ++i) {
+            System.out.println(current.getName()+"\tsetCurrent\t"+i+"\t/\t"+end);
+            if (col == numberOfColumns) {
+                ++row;
+                col = 0;
+                strings[row][0] = Long.toString(row, radix);
+            }
+            Short b = allData.get(i);
+            if (b == null) {
+                bytes[row][col] = null;
+                chars[row][col] = null;
+            } else {
+                bytes[row][col] = Integer.toString(b, radix);
+                chars[row][col] = (char) (short) b;
+            }
+            ++col;
+        }
+        valuesJTableModel.setDataVector(bytes, names);
+        charsJTableModel.setDataVector(chars, names);
+        listJTableModel.setDataVector(strings, new String[]{"index"});
+    }
+
+    private void read(long start, long end) {
+        try (FileInputStream fileInputStream = new FileInputStream(current)) {
+            fileInputStream.skipNBytes(start);
+            long i;
+            for (i = start; i < end && i < current.length(); i++) {
+                System.out.println(current.getName()+"\tread\t"+i+"\t/\t"+end);
+                allData.put(i, (short) fileInputStream.read());
+            }
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    private void write(long start, long end) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(current, "rwd")) {
+            randomAccessFile.seek(start);
+            byte[] bytes = new byte[(int) (end - start)];
+            for (int i = 0; i < bytes.length; i++) {
+                System.out.println(current.getName()+"\twrite\t"+i+"\t/\t"+end);
+                Short data=allData.get(start + i);
+                if (data==null){
+                    continue;
+                }
+                bytes[i] = (byte)(short)data;
+            }
+            randomAccessFile.write(bytes);
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    class MyModel extends DefaultTableModel {
+        private MyModel() {
+            super();
+            addTableModelListener(event -> {
+                if (event.getType() == TableModelEvent.UPDATE) {
+                    int row = event.getFirstRow();
+                    int col = event.getColumn();
+                    if (row != -1 && col != -1) {
+                        allData.put(
+                                currentStart + ((long) (row)) * numberOfColumns + col,
+                                this==valuesJTableModel? (short) Integer.parseInt((String) this.getValueAt(row,col),radix): (short) this.getValueAt(row,col)
+                        );
+                        setCurrent(currentStart,currentEnd);
+                    }
+                }
+
+            });
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int col) {
+            return allData.get(currentStart + ((long) (row - 1)) * numberOfColumns + col) == null;
+        }
     }
 }

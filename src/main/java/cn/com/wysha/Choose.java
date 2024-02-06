@@ -6,11 +6,11 @@ import java.awt.event.*;
 
 public class Choose extends JDialog {
     private JPanel contentPane;
-    private JButton buttonYes;
-    private JButton buttonNo;
-    private boolean choose;
-    public boolean isChoose() {
-        return choose;
+    private JButton buttonOK;
+    private JSpinner start;
+    private JSpinner end;
+    public long[] getValue(){
+        return new long[]{(int) start.getValue(), (int) end.getValue()};
     }
     public Choose() {
         setTitle("Choose");
@@ -18,36 +18,19 @@ public class Choose extends JDialog {
         setModal(true);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
-        setSize(dimension.width / 3, dimension.height / 3);
+        setSize(dimension.width / 4, dimension.height / 4);
         setLocationRelativeTo(null);
 
-        buttonYes.addActionListener(new ActionListener() {
+        buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onOK();
             }
         });
 
-        buttonNo.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
-
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                onCancel();
-            }
-        });
     }
 
     private void onOK() {
-        choose=true;
-        dispose();
-    }
-
-    private void onCancel() {
-        choose=false;
         dispose();
     }
 }
