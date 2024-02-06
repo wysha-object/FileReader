@@ -29,6 +29,7 @@ public class DataView extends JFrame {
     private JButton jumpButton;
     private JButton saveButton;
     private JButton readButton;
+    private JButton overWriteButton;
 
     public DataView(int radix, int numberOfColumns) {
         setContentPane(contentPane);
@@ -45,7 +46,7 @@ public class DataView extends JFrame {
         jFileChooser.setMultiSelectionEnabled(true);
         jFileChooser.showOpenDialog(null);
         this.current = jFileChooser.getSelectedFile();
-        setTitle(current.getName());
+        setTitle(current.getAbsolutePath());
         read(0, numberOfColumns);
         setCurrent(0, numberOfColumns);
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -62,31 +63,39 @@ public class DataView extends JFrame {
         list.setEnabled(false);
         setSize(dimension.width / 2, dimension.height / 2);
         readButton.addActionListener(e -> {
-            Choose choose=new Choose();
+            Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs=choose.getValue();
-            read(rs[0],rs[1]);
+            long[] rs = choose.getValue();
+            read(rs[0], rs[1]);
         });
         jumpButton.addActionListener(e -> {
-            Choose choose=new Choose();
+            Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs=choose.getValue();
-            setCurrent(rs[0],rs[1]);
+            long[] rs = choose.getValue();
+            setCurrent(rs[0], rs[1]);
         });
         saveButton.addActionListener(e -> {
-            Choose choose=new Choose();
+            Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs=choose.getValue();
-            write(rs[0],rs[1]);
+            long[] rs = choose.getValue();
+            write(rs[0], rs[1]);
+        });
+        overWriteButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setMultiSelectionEnabled(true);
+            fileChooser.showOpenDialog(null);
+            File file = fileChooser.getSelectedFile();
+            overWrite(file);
         });
     }
 
     private void setCurrent(long start, long end) {
         currentStart = start;
-        currentEnd=end;
+        currentEnd = end;
         int numberOfRows = (int) ((end - start) / numberOfColumns) + 1;
-        String[][] bytes = new String[numberOfRows][numberOfColumns+1];
-        String[][] chars = new String[numberOfRows][numberOfColumns+1];
+        String[][] bytes = new String[numberOfRows][numberOfColumns + 1];
+        String[][] chars = new String[numberOfRows][numberOfColumns + 1];
         int row = -1;
         int col = numberOfColumns+1;
         for (long i = start; i < end; ++i) {
@@ -139,6 +148,18 @@ public class DataView extends JFrame {
                 bytes[i] = (byte)(short)data;
             }
             randomAccessFile.write(bytes);
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    private void overWrite(File file) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(current, "rwd")) {
+            try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                randomAccessFile.seek(currentStart);
+                byte[] bytes=fileInputStream.readNBytes((int) (currentEnd-currentStart));
+                randomAccessFile.write(bytes);
+            }
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
