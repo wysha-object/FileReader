@@ -29,6 +29,13 @@ public class MainUI extends JFrame {
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize().getSize();
         setSize(dimension.width / 2, dimension.height / 2);
         setLocationRelativeTo(null);
-        chooseFileButton.addActionListener(e -> new DataView((int) radixSpinner.getValue(), (int) numberOfColumns.getValue()).setVisible(true));
+        chooseFileButton.addActionListener(e -> {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            jFileChooser.setMultiSelectionEnabled(true);
+            if (jFileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                new DataView(jFileChooser.getSelectedFile(),(int) radixSpinner.getValue(), (int) numberOfColumns.getValue()).setVisible(true);
+            }
+        });
     }
 }

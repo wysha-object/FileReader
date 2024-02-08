@@ -31,7 +31,8 @@ public class DataView extends JFrame {
     private JButton readButton;
     private JButton overWriteButton;
 
-    public DataView(int radix, int numberOfColumns) {
+    public DataView(File current, int radix, int numberOfColumns) {
+        this.current = current;
         setContentPane(contentPane);
         label.setText("radix : " + radix);
         this.numberOfColumns = numberOfColumns;
@@ -41,11 +42,6 @@ public class DataView extends JFrame {
         for (int i = 1; i <= numberOfColumns; i++) {
             names[i] = Integer.toString(i-1, radix);
         }
-        JFileChooser jFileChooser = new JFileChooser();
-        jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        jFileChooser.setMultiSelectionEnabled(true);
-        jFileChooser.showOpenDialog(null);
-        this.current = jFileChooser.getSelectedFile();
         setTitle(current.getAbsolutePath());
         read(0, numberOfColumns);
         setCurrent(0, numberOfColumns);
@@ -65,28 +61,35 @@ public class DataView extends JFrame {
         readButton.addActionListener(e -> {
             Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs = choose.getValue();
-            read(rs[0], rs[1]);
+            if (choose.isChoose()) {
+                long[] rs = choose.getValue();
+                read(rs[0], rs[1]);
+            }
         });
         jumpButton.addActionListener(e -> {
             Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs = choose.getValue();
-            setCurrent(rs[0], rs[1]);
+            if (choose.isChoose()) {
+                long[] rs = choose.getValue();
+                setCurrent(rs[0], rs[1]);
+            }
         });
         saveButton.addActionListener(e -> {
             Choose choose = new Choose();
             choose.setVisible(true);
-            long[] rs = choose.getValue();
-            write(rs[0], rs[1]);
+            if (choose.isChoose()) {
+                long[] rs = choose.getValue();
+                write(rs[0], rs[1]);
+            }
         });
         overWriteButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setMultiSelectionEnabled(true);
-            fileChooser.showOpenDialog(null);
-            File file = fileChooser.getSelectedFile();
-            overWrite(file);
+            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                overWrite(file);
+            }
         });
     }
 
