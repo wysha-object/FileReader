@@ -102,7 +102,6 @@ public class DataView extends JFrame {
         int row = -1;
         int col = numberOfColumns+1;
         for (long i = start; i < end; ++i) {
-            System.out.println(current.getName()+"\tsetCurrent\t"+i+"\t/\t"+end);
             if (col > numberOfColumns) {
                 ++row;
                 col = 1;
@@ -130,7 +129,6 @@ public class DataView extends JFrame {
             fileInputStream.skipNBytes(start);
             long i;
             for (i = start; i < end && i < current.length(); i++) {
-                System.out.println(current.getName()+"\tread\t"+i+"\t/\t"+end);
                 allData.put(i, (short) fileInputStream.read());
             }
         } catch (Exception exception) {
@@ -143,7 +141,6 @@ public class DataView extends JFrame {
             randomAccessFile.seek(start);
             byte[] bytes = new byte[(int) (end - start)];
             for (int i = 0; i < bytes.length; i++) {
-                System.out.println(current.getName()+"\twrite\t"+i+"\t/\t"+end);
                 Short data=allData.get(start + i);
                 if (data==null){
                     continue;
