@@ -7,6 +7,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.util.HashMap;
 
 /**
@@ -101,7 +102,12 @@ public class DataView extends JFrame {
         String[][] chars = new String[numberOfRows][numberOfColumns + 1];
         int row = -1;
         int col = numberOfColumns+1;
+        String string = "\r"+current.getName()+"\tsetCurrent:\t";
+        System.out.println(string+start+"\tto\t"+end);
         for (long i = start; i < end; ++i) {
+            if ( ( i & 0xFF ) == 0 ) {
+                System.out.print(string+i+"\t/\t"+end);
+            }
             if (col > numberOfColumns) {
                 ++row;
                 col = 1;
@@ -118,6 +124,8 @@ public class DataView extends JFrame {
             }
             ++col;
         }
+        System.out.print(string+(end-1)+"\t/\t"+end);
+        System.out.println("\n"+string+"completed");
         bytes[numberOfRows-1][0] = Long.toString(start+ (long) (numberOfRows-1) *numberOfColumns, radix);
         chars[numberOfRows-1][0] = Long.toString(start+ (long) (numberOfRows-1) *numberOfColumns, radix);
         valuesJTableModel.setDataVector(bytes, names);
@@ -128,9 +136,16 @@ public class DataView extends JFrame {
         try (FileInputStream fileInputStream = new FileInputStream(current)) {
             fileInputStream.skipNBytes(start);
             long i;
+            String string = "\r"+current.getName()+"\tread:\t";
+            System.out.println(string+start+"\tto\t"+end);
             for (i = start; i < end && i < current.length(); i++) {
+                if ( ( i & 0xFF ) == 0 ) {
+                    System.out.print(string+i+"\t/\t"+end);
+                }
                 allData.put(i, (short) fileInputStream.read());
             }
+            System.out.print(string+(end-1)+"\t/\t"+end);
+            System.out.println("\n"+string+"completed");
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
@@ -140,13 +155,20 @@ public class DataView extends JFrame {
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(current, "rwd")) {
             randomAccessFile.seek(start);
             byte[] bytes = new byte[(int) (end - start)];
+            String string = "\r"+current.getName()+"\tsave:\t";
+            System.out.println(string+start+"\tto\t"+end);
             for (int i = 0; i < bytes.length; i++) {
+                if ( ( i & 0xFF ) == 0 ) {
+                    System.out.print(string+i+"\t/\t"+end);
+                }
                 Short data=allData.get(start + i);
                 if (data==null){
                     continue;
                 }
                 bytes[i] = (byte)(short)data;
             }
+            System.out.print(string+(end-1)+"\t/\t"+end);
+            System.out.println("\n"+string+"completed");
             randomAccessFile.write(bytes);
         } catch (Exception exception) {
             throw new RuntimeException(exception);
@@ -175,7 +197,7 @@ public class DataView extends JFrame {
                     if (row >= 0 && col >= 0) {
                         allData.put(
                                 currentStart + ((long) (row)) * numberOfColumns + col,
-                                this==valuesJTableModel? (short) Integer.parseInt((String) this.getValueAt(row,event.getColumn()),radix): (short) ((String)this.getValueAt(row,event.getColumn())).charAt(0)
+                                this==valuesJTableModel? new BigInteger((String) this.getValueAt(row,event.getColumn()),radix).and(new BigInteger("255")).shortValue(): (short) ((String)this.getValueAt(row,event.getColumn())).charAt(0)
                         );
                         setCurrent(currentStart,currentEnd);
                     }
